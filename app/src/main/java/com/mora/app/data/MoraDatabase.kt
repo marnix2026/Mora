@@ -20,6 +20,18 @@ data class TaskEntity(
     val createdAt: Long = System.currentTimeMillis()
 )
 
+// type: "INCOME" (fidiram-bola), "EXPENSE" (lany),
+//       "DEBT_OWED" (trosa tsy maintsy aloako), "DEBT_RECEIVABLE" (trosa tokony horaisiko)
+@Entity(tableName = "money")
+data class MoneyEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val type: String,
+    val amount: Double,
+    val note: String,
+    val settled: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
 @Dao
 interface TaskDao {
     @Query("SELECT * FROM tasks ORDER BY done ASC, createdAt DESC")
@@ -35,9 +47,29 @@ interface TaskDao {
     suspend fun delete(id: Long)
 }
 
-@Database(entities = [TaskEntity::class], version = 1, exportSchema = false)
+@Dao
+interface MoneyDao {
+    @Query("SELECT * FROM money ORDER BY createdAt DESC")
+    fun all(): Flow<List<MoneyEntity>>
+
+    @Insert
+    suspend fun insert(item: MoneyEntity)
+
+    @Update
+    suspend fun update(item: MoneyEntity)
+
+    @Query("DELETE FROM money WHERE id = :id")
+    suspend fun delete(id: Long)
+}
+
+@Database(
+    entities = [TaskEntity::class, MoneyEntity::class],
+    version = 2,
+    exportSchema = false
+)
 abstract class MoraDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
+    abstract fun moneyDao(): MoneyDao
 
     companion object {
         @Volatile
@@ -49,7 +81,11 @@ abstract class MoraDatabase : RoomDatabase() {
                     context.applicationContext,
                     MoraDatabase::class.java,
                     "mora.db"
-                ).build().also { instance = it }
+                )
+                    // Fotoana fanandramana: raha miova ny rafitra, averina vaovao ny angona.
+                    // Ho soloina amin'ny fifindra-monina marina alohan'ny famoahana.
+                    .fallbackToDestructiveMigration()
+                    .build().also { instance = it }
             }
     }
 }
