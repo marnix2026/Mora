@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mora.app.ui.calcul.CalcScreen
+import com.mora.app.ui.organizer.OrganizerScreen
 import com.mora.app.ui.theme.MoraTheme
 import java.util.Calendar
 
@@ -52,6 +53,7 @@ class MainActivity : ComponentActivity() {
 
                     when (screen) {
                         "calcul" -> CalcScreen(onBack = { screen = "home" })
+                        "organizer" -> OrganizerScreen(onBack = { screen = "home" })
                         else -> HomeScreen(onOpen = { screen = it })
                     }
                 }
@@ -72,7 +74,7 @@ private val shortcuts = listOf(
     Shortcut("assistant", "💬", "Assistant", "Resaka amin'i MORA", false),
     Shortcut("live", "🌍", "Live Translate", "Fandikana feo", false),
     Shortcut("calcul", "🧮", "Calcul", "Kajy (offline)", true),
-    Shortcut("organizer", "📋", "Organizer", "Asa sy vola (offline)", false),
+    Shortcut("organizer", "📋", "Organizer", "Asa sy vola (offline)", true),
     Shortcut("photo", "📷", "Photo AI", "Sary sy OCR", false),
     Shortcut("document", "📄", "Document", "PDF sy famintinana", false)
 )
