@@ -3,6 +3,7 @@ package com.mora.app
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,11 +27,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mora.app.ui.calcul.CalcScreen
 import com.mora.app.ui.theme.MoraTheme
 import java.util.Calendar
 
@@ -40,22 +46,35 @@ class MainActivity : ComponentActivity() {
         setContent {
             MoraTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    HomeScreen()
+                    var screen by remember { mutableStateOf("home") }
+
+                    BackHandler(enabled = screen != "home") { screen = "home" }
+
+                    when (screen) {
+                        "calcul" -> CalcScreen(onBack = { screen = "home" })
+                        else -> HomeScreen(onOpen = { screen = it })
+                    }
                 }
             }
         }
     }
 }
 
-private data class Shortcut(val emoji: String, val title: String, val subtitle: String)
+private data class Shortcut(
+    val key: String,
+    val emoji: String,
+    val title: String,
+    val subtitle: String,
+    val ready: Boolean
+)
 
 private val shortcuts = listOf(
-    Shortcut("💬", "Assistant", "Resaka amin'i MORA"),
-    Shortcut("🌍", "Live Translate", "Fandikana feo"),
-    Shortcut("🧮", "Calcul", "Kajy (offline)"),
-    Shortcut("📋", "Organizer", "Asa sy vola (offline)"),
-    Shortcut("📷", "Photo AI", "Sary sy OCR"),
-    Shortcut("📄", "Document", "PDF sy famintinana")
+    Shortcut("assistant", "💬", "Assistant", "Resaka amin'i MORA", false),
+    Shortcut("live", "🌍", "Live Translate", "Fandikana feo", false),
+    Shortcut("calcul", "🧮", "Calcul", "Kajy (offline)", true),
+    Shortcut("organizer", "📋", "Organizer", "Asa sy vola (offline)", false),
+    Shortcut("photo", "📷", "Photo AI", "Sary sy OCR", false),
+    Shortcut("document", "📄", "Document", "PDF sy famintinana", false)
 )
 
 private fun greeting(): String {
@@ -68,7 +87,7 @@ private fun greeting(): String {
 }
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onOpen: (String) -> Unit) {
     val context = LocalContext.current
     val soon = {
         Toast.makeText(
@@ -105,7 +124,6 @@ fun HomeScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Karatra mpiara-miasa (sary marina ho avy any aoriana)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -169,7 +187,7 @@ fun HomeScreen() {
                         modifier = Modifier
                             .weight(1f)
                             .height(112.dp)
-                            .clickable { soon() },
+                            .clickable { if (item.ready) onOpen(item.key) else soon() },
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
