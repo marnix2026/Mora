@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mora.app.ui.Lang
 import com.mora.app.ui.Strings
+import com.mora.app.ui.assistant.AssistantScreen
 import com.mora.app.ui.calcul.CalcScreen
 import com.mora.app.ui.organizer.OrganizerScreen
 import com.mora.app.ui.settings.SettingsScreen
@@ -69,6 +70,7 @@ class MainActivity : ComponentActivity() {
                     BackHandler(enabled = screen != "home") { screen = "home" }
 
                     when (screen) {
+                        "assistant" -> AssistantScreen(lang = lang, onBack = { screen = "home" })
                         "calcul" -> CalcScreen(onBack = { screen = "home" })
                         "organizer" -> OrganizerScreen(onBack = { screen = "home" })
                         "settings" -> SettingsScreen(
@@ -102,156 +104,4 @@ private data class Shortcut(
 )
 
 private val shortcuts = listOf(
-    Shortcut("assistant", "💬", { it.assistantTitle }, { it.assistantSub }, false),
-    Shortcut("live", "🌍", { it.liveTitle }, { it.liveSub }, false),
-    Shortcut("calcul", "🧮", { it.calcTitle }, { it.calcSub }, true),
-    Shortcut("organizer", "📋", { it.orgTitle }, { it.orgSub }, true),
-    Shortcut("photo", "📷", { it.photoTitle }, { it.photoSub }, false),
-    Shortcut("document", "📄", { it.docTitle }, { it.docSub }, false)
-)
-
-private fun greeting(s: Strings): String {
-    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-    return when {
-        hour < 12 -> s.greetMorning
-        hour < 18 -> s.greetAfternoon
-        else -> s.greetEvening
-    }
-}
-
-@Composable
-fun HomeScreen(strings: Strings, onOpen: (String) -> Unit) {
-    val context = LocalContext.current
-    val soon = {
-        Toast.makeText(context, strings.comingSoon, Toast.LENGTH_SHORT).show()
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 24.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column {
-                Text(
-                    text = "MORA",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = strings.tagline,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            TextButton(onClick = { onOpen("settings") }) { Text("⚙ ${strings.settings}") }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(text = greeting(strings), style = MaterialTheme.typography.titleLarge)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { soon() },
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(64.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "N",
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(
-                        text = "Namana",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = strings.companionNote,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = strings.features,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        shortcuts.chunked(2).forEach { rowItems ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                rowItems.forEach { item ->
-                    Card(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(112.dp)
-                            .clickable { if (item.ready) onOpen(item.key) else soon() },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(14.dp),
-                            verticalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = item.emoji, style = MaterialTheme.typography.headlineSmall)
-                            Column {
-                                Text(
-                                    text = item.title(strings),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = item.subtitle(strings),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-    }
-}
+    Shortcut("
