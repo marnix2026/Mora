@@ -28,8 +28,10 @@ class ChatStore(context: Context) {
         dao.deleteChat(chatId)
     }
 
-    suspend fun add(chat: ChatEntity, role: String, text: String) {
-        dao.insertMessage(MessageEntity(chatId = chat.id, role = role, text = text))
+    suspend fun add(chat: ChatEntity, role: String, text: String, persona: String) {
+        dao.insertMessage(
+            MessageEntity(chatId = chat.id, role = role, text = text, persona = persona)
+        )
         dao.updateChat(chat.copy(updatedAt = System.currentTimeMillis()))
     }
 }
