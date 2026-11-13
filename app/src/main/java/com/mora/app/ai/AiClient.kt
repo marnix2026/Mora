@@ -7,11 +7,11 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-data class ChatMsg(val role: String, val text: String) // role: "user" na "assistant"
+data class ChatMsg(val role: String, val text: String)
 
 sealed class AiResult {
     data class Ok(val text: String) : AiResult()
-    data class Fail(val kind: String) : AiResult() // "network", "server"
+    data class Fail(val kind: String, val detail: String = "") : AiResult()
 }
 
 object AiClient {
@@ -42,12 +42,12 @@ object AiClient {
 
                 if (code in 200..299) {
                     val t = JSONObject(txt).optString("text", "")
-                    if (t.isNotEmpty()) AiResult.Ok(t) else AiResult.Fail("server")
+                    if (t.isNotEmpty()) AiResult.Ok(t) else AiResult.Fail("server", "empty")
                 } else {
-                    AiResult.Fail("server")
+                    AiResult.Fail("server", "HTTP $code: " + txt.take(300))
                 }
             } catch (e: Exception) {
-                AiResult.Fail("network")
+                AiResult.Fail("network", e.javaClass.simpleName)
             }
         }
 }
