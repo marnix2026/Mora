@@ -23,6 +23,7 @@ import com.mora.app.ui.stringsFor
 import com.mora.app.ui.theme.MoraTheme
 import com.mora.app.ui.translate.TranslateScreen
 import com.mora.app.ui.writing.WritingScreen
+import com.mora.app.ui.memory.MemoryScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +49,7 @@ class MainActivity : ComponentActivity() {
                         "assistant" -> AssistantScreen(lang = lang, onBack = { screen = "home" })
                         "live" -> TranslateScreen(lang = lang, onBack = { screen = "home" })
                         "writing" -> WritingScreen(lang = lang, onBack = { screen = "home" })
+                        "memory" -> MemoryScreen(lang = lang, onBack = { screen = "home" })
                         "calcul" -> CalcScreen(onBack = { screen = "home" })
                         "organizer" -> OrganizerScreen(onBack = { screen = "home" })
                         "settings" -> SettingsScreen(
