@@ -37,13 +37,13 @@ export default {
 
     const payload = {
       contents,
-      generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
+            generationConfig: { thinkingConfig: { thinkingLevel: "low" } },
     };
     if (system) {
       payload.systemInstruction = { parts: [{ text: system }] };
     }
 
-    const model = "gemini-3.8-flash";
+        const model = "gemini-4-hydrogen";
     let lastStatus = 0;
     let lastDetail = "";
 
