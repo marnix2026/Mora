@@ -13,7 +13,7 @@ data class Shortcut(
 
 val shortcuts = listOf(
     Shortcut("assistant", "AI", { it.assistantTitle }, { it.assistantSub }, true),
-    Shortcut("live", "TR", { it.liveTitle }, { it.liveSub }, false),
+    Shortcut("live", "TR", { it.liveTitle }, { it.liveSub }, true),
     Shortcut("calcul", "123", { it.calcTitle }, { it.calcSub }, true),
     Shortcut("organizer", "OK", { it.orgTitle }, { it.orgSub }, true),
     Shortcut("photo", "IMG", { it.photoTitle }, { it.photoSub }, false),
