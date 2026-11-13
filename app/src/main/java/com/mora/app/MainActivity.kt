@@ -97,11 +97,7 @@ class MainActivity : ComponentActivity() {
 
 private data class Shortcut(
     val key: String,
-    val emoji: String,
+    val icon: String,
     val title: (Strings) -> String,
     val subtitle: (Strings) -> String,
     val ready: Boolean
-)
-
-private val shortcuts = listOf(
-    Shortcut("
