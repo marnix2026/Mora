@@ -41,7 +41,8 @@ import kotlinx.coroutines.launch
 fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
     val chats by store.chats.collectAsState(initial = emptyList())
     val chat = chats.firstOrNull { it.id == chatId }
-    val msgs by store.messages(chatId).collectAsState(initial = emptyList())
+    val allMsgs by store.messages(chatId).collectAsState(initial = emptyList())
+    val msgs = allMsgs.filter { it.persona == (chat?.persona ?: "namana") }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     var input by remember { mutableStateOf("") }
@@ -65,12 +66,14 @@ fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
         loading = true
         error = ""
         scope.launch {
-            if (msgs.isEmpty()) store.rename(chat, t.take(24))
-            store.add(chat, "user", t)
-            val hist = store.history(chatId).map { ChatMsg(it.role, it.text) }
+            if (allMsgs.isEmpty()) store.rename(chat, t.take(24))
+            store.add(chat, "user", t, chat.persona)
+            val hist = store.history(chatId)
+                .filter { it.persona == chat.persona }
+                .map { ChatMsg(it.role, it.text) }
             val p = personalityByKey(chat.persona)
             when (val r = AiClient.chat(buildSystemPrompt(p, p.name, lang.code), hist)) {
-                is AiResult.Ok -> store.add(chat, "assistant", r.text)
+                is AiResult.Ok -> store.add(chat, "assistant", r.text, chat.persona)
                 is AiResult.Fail -> error = tr(
                     lang, "Tsy mamaly ny AI. Hamarino ny internet.",
                     "L'IA ne répond pas. Vérifiez internet.",
