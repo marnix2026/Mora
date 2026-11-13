@@ -26,6 +26,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import com.mora.app.ai.MemoryStore
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mora.app.ai.AiClient
@@ -40,6 +42,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
     val chats by store.chats.collectAsState(initial = emptyList())
+        val context = LocalContext.current
     val chat = chats.firstOrNull { it.id == chatId }
     val allMsgs by store.messages(chatId).collectAsState(initial = emptyList())
     val msgs = allMsgs.filter { it.persona == (chat?.persona ?: "namana") }
@@ -72,7 +75,7 @@ fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
                 .filter { it.persona == chat.persona }
                 .map { ChatMsg(it.role, it.text) }
             val p = personalityByKey(chat.persona)
-            when (val r = AiClient.chat(buildSystemPrompt(p, p.name, lang.code), hist)) {
+                        when (val r = AiClient.chat(buildSystemPrompt(p, p.name, lang.code) + MemoryStore(context).prompt(), hist)) {
                 is AiResult.Ok -> store.add(chat, "assistant", r.text, chat.persona)
                 is AiResult.Fail -> error = tr(
                     lang, "Tsy mamaly ny AI. Hamarino ny internet.",
