@@ -12,7 +12,7 @@ export default {
 
     if (request.method !== "POST") {
       return new Response(
-        JSON.stringify({ ok: true, service: "mora-ai" }),
+        JSON.stringify({ ok: true, service: "mora-ai", hasKey: !!env.GEMINI_API_KEY }),
         { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
@@ -51,7 +51,7 @@ export default {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": env.GEMINI_API_KEY,
+          "x-goog-api-key": env.GEMINI_API_KEY || "",
         },
         body: JSON.stringify(payload),
       });
@@ -60,7 +60,12 @@ export default {
     }
 
     if (!res.ok) {
-      return json({ error: "AI service error", status: res.status }, 502, cors);
+      const detail = (await res.text()).slice(0, 300);
+      return json(
+        { error: "AI service error", status: res.status, detail: detail },
+        502,
+        cors
+      );
     }
 
     const data = await res.json();
