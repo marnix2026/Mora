@@ -35,7 +35,10 @@ export default {
       parts: [{ text: String(m.text || "").slice(0, 8000) }],
     }));
 
-    const payload = { contents };
+    const payload = {
+      contents,
+      generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
+    };
     if (system) {
       payload.systemInstruction = { parts: [{ text: system }] };
     }
@@ -44,7 +47,7 @@ export default {
     let lastStatus = 0;
     let lastDetail = "";
 
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const res = await fetch(
           "https://generativelanguage.googleapis.com/v1beta/models/" +
@@ -56,7 +59,7 @@ export default {
               "x-goog-api-key": env.GEMINI_API_KEY || "",
             },
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(15000),
+            signal: AbortSignal.timeout(25000),
           }
         );
 
@@ -73,7 +76,7 @@ export default {
         }
       } catch (e) {
         lastStatus = 0;
-        lastDetail = "timeout/network";
+        lastDetail = "timeout/network: " + String(e).slice(0, 80);
       }
     }
 
