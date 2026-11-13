@@ -107,7 +107,7 @@ fun AssistantScreen(lang: Lang, onBack: () -> Unit) {
             when (val r = AiClient.chat(system, history)) {
                 is AiResult.Ok -> lines.add(Line("assistant", r.text))
                 is AiResult.Fail -> lines.add(
-                    Line("assistant", if (r.kind == "network") errNetwork else errServer, true)
+                                        Line("assistant", (if (r.kind == "network") errNetwork else errServer) + "\n[" + r.detail + "]", true)
                 )
             }
             loading = false
