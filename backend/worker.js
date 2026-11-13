@@ -40,11 +40,11 @@ export default {
       payload.systemInstruction = { parts: [{ text: system }] };
     }
 
-    const models = ["gemini-3.8-flash", "gemini-2.0-flash"];
+    const model = "gemini-3.8-flash";
     let lastStatus = 0;
     let lastDetail = "";
 
-    for (const model of models) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const res = await fetch(
           "https://generativelanguage.googleapis.com/v1beta/models/" +
@@ -56,7 +56,7 @@ export default {
               "x-goog-api-key": env.GEMINI_API_KEY || "",
             },
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(20000),
+            signal: AbortSignal.timeout(15000),
           }
         );
 
@@ -68,11 +68,12 @@ export default {
           lastDetail = "empty";
         } else {
           lastStatus = res.status;
-          lastDetail = model + ": " + (await res.text()).slice(0, 150);
+          lastDetail = (await res.text()).slice(0, 200);
+          if (res.status !== 503 && res.status !== 429) break;
         }
       } catch (e) {
         lastStatus = 0;
-        lastDetail = model + ": timeout/network";
+        lastDetail = "timeout/network";
       }
     }
 
