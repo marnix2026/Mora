@@ -20,8 +20,6 @@ data class TaskEntity(
     val createdAt: Long = System.currentTimeMillis()
 )
 
-// type: "INCOME" (fidiram-bola), "EXPENSE" (lany),
-//       "DEBT_OWED" (trosa tsy maintsy aloako), "DEBT_RECEIVABLE" (trosa tokony horaisiko)
 @Entity(tableName = "money")
 data class MoneyEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -32,44 +30,66 @@ data class MoneyEntity(
     val createdAt: Long = System.currentTimeMillis()
 )
 
+@Entity(tableName = "chats")
+data class ChatEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val persona: String,
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "messages")
+data class MessageEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val chatId: Long,
+    val role: String,
+    val text: String,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
 @Dao
 interface TaskDao {
     @Query("SELECT * FROM tasks ORDER BY done ASC, createdAt DESC")
     fun all(): Flow<List<TaskEntity>>
-
-    @Insert
-    suspend fun insert(task: TaskEntity)
-
-    @Update
-    suspend fun update(task: TaskEntity)
-
-    @Query("DELETE FROM tasks WHERE id = :id")
-    suspend fun delete(id: Long)
+    @Insert suspend fun insert(task: TaskEntity)
+    @Update suspend fun update(task: TaskEntity)
+    @Query("DELETE FROM tasks WHERE id = :id") suspend fun delete(id: Long)
 }
 
 @Dao
 interface MoneyDao {
     @Query("SELECT * FROM money ORDER BY createdAt DESC")
     fun all(): Flow<List<MoneyEntity>>
+    @Insert suspend fun insert(item: MoneyEntity)
+    @Update suspend fun update(item: MoneyEntity)
+    @Query("DELETE FROM money WHERE id = :id") suspend fun delete(id: Long)
+}
 
-    @Insert
-    suspend fun insert(item: MoneyEntity)
-
-    @Update
-    suspend fun update(item: MoneyEntity)
-
-    @Query("DELETE FROM money WHERE id = :id")
-    suspend fun delete(id: Long)
+@Dao
+interface ChatDao {
+    @Query("SELECT * FROM chats ORDER BY updatedAt DESC")
+    fun chats(): Flow<List<ChatEntity>>
+    @Insert suspend fun insertChat(chat: ChatEntity): Long
+    @Update suspend fun updateChat(chat: ChatEntity)
+    @Query("DELETE FROM chats WHERE id = :id") suspend fun deleteChat(id: Long)
+    @Query("SELECT * FROM messages WHERE chatId = :chatId ORDER BY id ASC")
+    fun messages(chatId: Long): Flow<List<MessageEntity>>
+    @Query("SELECT * FROM messages WHERE chatId = :chatId ORDER BY id ASC")
+    suspend fun messagesOnce(chatId: Long): List<MessageEntity>
+    @Insert suspend fun insertMessage(m: MessageEntity)
+    @Query("DELETE FROM messages WHERE chatId = :chatId")
+    suspend fun deleteMessages(chatId: Long)
 }
 
 @Database(
-    entities = [TaskEntity::class, MoneyEntity::class],
-    version = 2,
+    entities = [TaskEntity::class, MoneyEntity::class, ChatEntity::class, MessageEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class MoraDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun moneyDao(): MoneyDao
+    abstract fun chatDao(): ChatDao
 
     companion object {
         @Volatile
@@ -82,8 +102,6 @@ abstract class MoraDatabase : RoomDatabase() {
                     MoraDatabase::class.java,
                     "mora.db"
                 )
-                    // Fotoana fanandramana: raha miova ny rafitra, averina vaovao ny angona.
-                    // Ho soloina amin'ny fifindra-monina marina alohan'ny famoahana.
                     .fallbackToDestructiveMigration()
                     .build().also { instance = it }
             }
