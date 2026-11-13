@@ -44,6 +44,7 @@ data class MessageEntity(
     val chatId: Long,
     val role: String,
     val text: String,
+        val persona: String = "namana",
     val createdAt: Long = System.currentTimeMillis()
 )
 
@@ -83,7 +84,7 @@ interface ChatDao {
 
 @Database(
     entities = [TaskEntity::class, MoneyEntity::class, ChatEntity::class, MessageEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class MoraDatabase : RoomDatabase() {
