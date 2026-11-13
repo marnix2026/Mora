@@ -40,31 +40,25 @@ export default {
       payload.systemInstruction = { parts: [{ text: system }] };
     }
 
-    const models = ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-2.0-flash"];
+    const models = ["gemini-3.8-flash", "gemini-2.0-flash"];
     let lastStatus = 0;
     let lastDetail = "";
 
     for (const model of models) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        let res;
-        try {
-          res = await fetch(
-            "https://generativelanguage.googleapis.com/v1beta/models/" +
-              model + ":generateContent",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": env.GEMINI_API_KEY || "",
-              },
-              body: JSON.stringify(payload),
-            }
-          );
-        } catch (e) {
-          lastStatus = 0;
-          lastDetail = "network";
-          continue;
-        }
+      try {
+        const res = await fetch(
+          "https://generativelanguage.googleapis.com/v1beta/models/" +
+            model + ":generateContent",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": env.GEMINI_API_KEY || "",
+            },
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(20000),
+          }
+        );
 
         if (res.ok) {
           const data = await res.json();
@@ -72,15 +66,13 @@ export default {
             data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
           if (text) return json({ text, model }, 200, cors);
           lastDetail = "empty";
-          break;
+        } else {
+          lastStatus = res.status;
+          lastDetail = model + ": " + (await res.text()).slice(0, 150);
         }
-
-        lastStatus = res.status;
-        lastDetail = (await res.text()).slice(0, 200);
-        if (res.status === 503 || res.status === 429) {
-          continue; // miezaka indray, avy eo modely manaraka
-        }
-        break; // 404/400/403: handeha any amin'ny modely manaraka
+      } catch (e) {
+        lastStatus = 0;
+        lastDetail = model + ": timeout/network";
       }
     }
 
