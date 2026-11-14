@@ -54,7 +54,7 @@ object AiClient {
                 conn.disconnect()
 
                 if (code in 200..299) {
-                    val t = JSONObject(txt).optString("text", "")
+                                        val t = JSONObject(txt).optString("text", "").replace("**", "").replace("__", "")
                     if (t.isNotEmpty()) AiResult.Ok(t) else AiResult.Fail("server", "empty")
                 } else {
                     AiResult.Fail("server", "HTTP $code: " + txt.take(300))
