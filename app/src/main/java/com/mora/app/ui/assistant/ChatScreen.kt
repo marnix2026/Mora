@@ -1,5 +1,9 @@
 package com.mora.app.ui.assistant
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,11 +16,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,22 +33,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.mora.app.ai.MemoryStore
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.mora.app.ai.AiClient
 import com.mora.app.ai.AiResult
 import com.mora.app.ai.ChatMsg
+import com.mora.app.ai.MemoryStore
 import com.mora.app.ai.buildSystemPrompt
 import com.mora.app.ai.personalityByKey
 import com.mora.app.data.ChatStore
 import com.mora.app.ui.Lang
+import com.mora.app.voice.SpeechInput
 import kotlinx.coroutines.launch
 
 @Composable
 fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
+    val context = LocalContext.current
     val chats by store.chats.collectAsState(initial = emptyList())
-        val context = LocalContext.current
     val chat = chats.firstOrNull { it.id == chatId }
     val allMsgs by store.messages(chatId).collectAsState(initial = emptyList())
     val msgs = allMsgs.filter { it.persona == (chat?.persona ?: "namana") }
@@ -53,6 +61,50 @@ fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
     var error by remember { mutableStateOf("") }
     var renaming by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf("") }
+    var listening by remember { mutableStateOf(false) }
+    val speech = remember { SpeechInput(context) }
+    DisposableEffect(Unit) { onDispose { speech.stop() } }
+
+    fun startListening() {
+        if (!speech.available()) {
+            error = tr(lang, "Tsy misy serivisy feo ao amin'ny findainao.",
+                "Aucun service vocal sur ce téléphone.", "No speech service on this phone.")
+            return
+        }
+        error = ""
+        speech.start(lang,
+            onListening = { listening = true },
+            onResult = { t -> listening = false; input = (input + " " + t).trim() },
+            onError = { e ->
+                listening = false
+                error = when (e) {
+                    "nomatch" -> tr(lang, "Tsy renesana tsara. Andramo indray.",
+                        "Je n'ai pas compris. Réessayez.", "Didn't catch that. Try again.")
+                    "network" -> tr(lang, "Mila internet ny fanoratana feo.",
+                        "Internet requis pour la dictée.", "Internet is required for dictation.")
+                    "language" -> tr(lang, "Tsy manohana io fiteny io ny findainao. Andramo Frantsay na Anglisy.",
+                        "Langue non prise en charge. Essayez français ou anglais.",
+                        "Language not supported. Try French or English.")
+                    "permission" -> tr(lang, "Tsy nahazo alalana ny mikrô.",
+                        "Micro non autorisé.", "Microphone not allowed.")
+                    else -> tr(lang, "Tsy mandeha ny mikrô ($e).", "Micro indisponible ($e).",
+                        "Microphone unavailable ($e).")
+                }
+            })
+    }
+
+    val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        if (ok) startListening()
+        else error = tr(lang, "Tsy nahazo alalana ny mikrô, ka tsy afaka mihaino.",
+            "Micro refusé, impossible d'écouter.", "Microphone denied, cannot listen.")
+    }
+
+    fun onMic() {
+        if (listening) { speech.stop(); listening = false; return }
+        val granted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        if (granted) startListening() else permLauncher.launch(Manifest.permission.RECORD_AUDIO)
+    }
 
     LaunchedEffect(msgs.size) {
         if (msgs.isNotEmpty()) listState.animateScrollToItem(msgs.size - 1)
@@ -75,7 +127,7 @@ fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
                 .filter { it.persona == chat.persona }
                 .map { ChatMsg(it.role, it.text) }
             val p = personalityByKey(chat.persona)
-                        when (val r = AiClient.chat(buildSystemPrompt(p, p.name, lang.code) + MemoryStore(context).prompt(), hist)) {
+            when (val r = AiClient.chat(buildSystemPrompt(p, p.name, lang.code) + MemoryStore(context).prompt(), hist)) {
                 is AiResult.Ok -> store.add(chat, "assistant", r.text, chat.persona)
                 is AiResult.Fail -> error = tr(
                     lang, "Tsy mamaly ny AI. Hamarino ny internet.",
@@ -118,12 +170,18 @@ fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
             if (loading) item { Text("…") }
             if (error.isNotEmpty()) item { Bubble(error, false, true) }
         }
+        if (listening) {
+            Text(tr(lang, "Mihaino... miteny azafady", "J'écoute... parlez", "Listening... speak now"),
+                color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+        }
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(input, { input = it }, Modifier.weight(1f),
                 label = { Text(tr(lang, "Soraty ny hafatra", "Écrivez un message", "Type a message")) },
                 maxLines = 4)
+            if (listening) Button(onClick = { onMic() }) { Text("Stop") }
+            else FilledTonalButton(onClick = { onMic() }) { Text("Mic") }
             Button(onClick = { send() }, enabled = !loading) {
                 Text(tr(lang, "Alefa", "Envoyer", "Send"))
             }
