@@ -40,7 +40,7 @@ fun HomeScreen(strings: Strings, onOpen: (String) -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            TextButton(onClick = { onOpen("settings") }) { Text(strings.settings) }
+                        TextButton(onClick = { onOpen("settings") }) { Text("⚙", style = MaterialTheme.typography.titleLarge) }
         }
         Spacer(Modifier.height(24.dp))
         Text(greeting(strings), style = MaterialTheme.typography.titleLarge)
