@@ -33,26 +33,20 @@ export default {
       parts: [{ text: String(m.text || "").slice(0, 4000) }],
     }));
 
-    const payload = {
-      contents,
-      generationConfig: {
-                thinkingConfig: { thinkingLevel: "low" },
-        maxOutputTokens: 800,
-      },
-    };
-    if (system) {
-      payload.systemInstruction = { parts: [{ text: system }] };
-    }
+    const candidates = [
+      { name: "gemini-2.5-flash-lite", cfg: { maxOutputTokens: 800 } },
+      { name: "gemini-4-hydrogen", cfg: { thinkingConfig: { thinkingLevel: "low" }, maxOutputTokens: 800 } },
+      { name: "gemini-3.8-flash", cfg: { thinkingConfig: { thinkingLevel: "low" }, maxOutputTokens: 800 } },
+    ];
 
-    const model = "gemini-4-hydrogen";
-    let lastStatus = 0;
-    let lastDetail = "";
-
-    for (let attempt = 0; attempt < 2; attempt++) {
+    const errors = [];
+    for (const c of candidates) {
+      const payload = { contents, generationConfig: c.cfg };
+      if (system) payload.systemInstruction = { parts: [{ text: system }] };
       try {
         const res = await fetch(
           "https://generativelanguage.googleapis.com/v1beta/models/" +
-            model + ":generateContent",
+            c.name + ":generateContent",
           {
             method: "POST",
             headers: {
@@ -60,28 +54,25 @@ export default {
               "x-goog-api-key": env.GEMINI_API_KEY || "",
             },
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(28000),
+            signal: AbortSignal.timeout(12000),
           }
         );
         if (res.ok) {
           const data = await res.json();
           const text =
             data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
-          if (text) return json({ text, model }, 200, cors);
-          lastDetail = "empty";
+          if (text) return json({ text, model: c.name }, 200, cors);
+          errors.push(c.name + ": empty");
         } else {
-          lastStatus = res.status;
-          lastDetail = (await res.text()).slice(0, 200);
-          if (res.status !== 503 && res.status !== 429) break;
+          errors.push(c.name + ": " + res.status);
         }
       } catch (e) {
-        lastStatus = 0;
-        lastDetail = "timeout/network: " + String(e).slice(0, 80);
+        errors.push(c.name + ": timeout");
       }
     }
 
     return json(
-      { error: "AI service error", status: lastStatus, detail: lastDetail },
+      { error: "AI service error", status: 0, detail: errors.join(" | ") },
       502,
       cors
     );
