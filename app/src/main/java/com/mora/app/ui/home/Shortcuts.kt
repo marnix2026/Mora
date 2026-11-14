@@ -19,7 +19,8 @@ val shortcuts = listOf(
     Shortcut("photo", "IMG", { it.photoTitle }, { it.photoSub }, false),
         Shortcut("document", "PDF", { it.docTitle }, { it.docSub }, false),
     Shortcut("writing", "AB", { "Writing" }, { "CV, taratasy, Facebook" }, true),
-        Shortcut("memory", "MEM", { "Memory" }, { "Zavatra tadidiko" }, true)
+        Shortcut("memory", "MEM", { "Memory" }, { "Zavatra tadidiko" }, true),
+        Shortcut("learning", "LRN", { "Learning" }, { "Lesona sy quiz" }, true)
 )
 
 fun greeting(s: Strings): String {
