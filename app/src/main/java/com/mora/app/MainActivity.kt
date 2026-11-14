@@ -26,7 +26,7 @@ import com.mora.app.ui.writing.WritingScreen
 import com.mora.app.ui.memory.MemoryScreen
 import com.mora.app.ui.learning.LearningScreen
 import com.mora.app.ui.photo.PhotoScreen
-
+import com.mora.app.ui.document.DocumentScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +54,7 @@ class MainActivity : ComponentActivity() {
                         "memory" -> MemoryScreen(lang = lang, onBack = { screen = "home" })
                         "learning" -> LearningScreen(lang = lang, onBack = { screen = "home" })
                         "photo" -> PhotoScreen(lang = lang, onBack = { screen = "home" })
+                        "document" -> DocumentScreen(lang = lang, onBack = { screen = "home" })
                         "calcul" -> CalcScreen(onBack = { screen = "home" })
                         "organizer" -> OrganizerScreen(onBack = { screen = "home" })
                         "settings" -> SettingsScreen(
