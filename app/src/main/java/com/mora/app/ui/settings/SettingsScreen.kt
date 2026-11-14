@@ -11,19 +11,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
+import com.mora.app.data.DataReset
 import com.mora.app.ui.Lang
 import com.mora.app.ui.Strings
+import com.mora.app.ui.assistant.tr
 
 @Composable
 fun SettingsScreen(
@@ -34,6 +44,9 @@ fun SettingsScreen(
     onTheme: (String) -> Unit,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    var confirm by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -51,10 +64,7 @@ fun SettingsScreen(
 
         Text(strings.language, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Lang.values().forEach { l ->
                 val m = Modifier.weight(1f)
                 if (l == lang) Button(onClick = { onLang(l) }, modifier = m) { Text(l.label) }
@@ -81,6 +91,36 @@ fun SettingsScreen(
         InfoCard(strings.privacy, strings.privacyText)
         Spacer(Modifier.height(12.dp))
         InfoCard(strings.about, strings.aboutText)
+
+        Spacer(Modifier.height(24.dp))
+        OutlinedButton(onClick = { confirm = true }, modifier = Modifier.fillMaxWidth()) {
+            Text(tr(lang, "Fafao ny angona rehetra", "Supprimer toutes les données", "Delete all data"))
+        }
+    }
+
+    if (confirm) {
+        AlertDialog(
+            onDismissRequest = { confirm = false },
+            title = { Text(tr(lang, "Fafana ve?", "Supprimer ?", "Delete?")) },
+            text = {
+                Text(tr(lang,
+                    "Ho voafafa ny resaka, memory, asa, vola ary fianarana rehetra. Tsy azo averina.",
+                    "Conversations, mémoire, tâches, finances et progrès seront supprimés. Irréversible.",
+                    "Chats, memory, tasks, money and progress will be deleted. This cannot be undone."))
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    Thread { DataReset.wipeAll(context) }.start()
+                    confirm = false
+                    Toast.makeText(context, "OK", Toast.LENGTH_SHORT).show()
+                }) { Text(tr(lang, "Eny", "Oui", "Yes")) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirm = false }) {
+                    Text(tr(lang, "Tsia", "Non", "No"))
+                }
+            }
+        )
     }
 }
 
