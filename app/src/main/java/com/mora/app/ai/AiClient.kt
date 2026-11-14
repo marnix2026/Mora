@@ -9,6 +9,8 @@ import java.net.URL
 
 data class ChatMsg(val role: String, val text: String)
 
+class ImageData(val mime: String, val base64: String)
+
 sealed class AiResult {
     data class Ok(val text: String) : AiResult()
     data class Fail(val kind: String, val detail: String = "") : AiResult()
@@ -17,14 +19,25 @@ sealed class AiResult {
 object AiClient {
     private const val ENDPOINT = "https://mora-ai.fanantenanaranaivoarison2.workers.dev"
 
-    suspend fun chat(system: String, history: List<ChatMsg>): AiResult =
+    suspend fun chat(
+        system: String,
+        history: List<ChatMsg>,
+        image: ImageData? = null
+    ): AiResult =
         withContext(Dispatchers.IO) {
             try {
                 val msgs = JSONArray()
                 history.forEach {
                     msgs.put(JSONObject().put("role", it.role).put("text", it.text))
                 }
-                val body = JSONObject().put("system", system).put("messages", msgs).toString()
+                val json = JSONObject().put("system", system).put("messages", msgs)
+                if (image != null) {
+                    json.put(
+                        "image",
+                        JSONObject().put("mime", image.mime).put("data", image.base64)
+                    )
+                }
+                val body = json.toString()
 
                 val conn = (URL(ENDPOINT).openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
