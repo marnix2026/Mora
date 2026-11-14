@@ -36,7 +36,7 @@ export default {
     const payload = {
       contents,
       generationConfig: {
-        thinkingConfig: { thinkingLevel: "minimal" },
+                thinkingConfig: { thinkingLevel: "low" },
         maxOutputTokens: 800,
       },
     };
