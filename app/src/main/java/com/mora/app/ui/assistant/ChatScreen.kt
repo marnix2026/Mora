@@ -62,21 +62,20 @@ fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
     var renaming by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf("") }
     var listening by remember { mutableStateOf(false) }
+        var status by remember { mutableStateOf("") }
     val speech = remember { SpeechInput(context) }
     DisposableEffect(Unit) { onDispose { speech.stop() } }
 
+    
     fun startListening() {
-        if (!speech.available()) {
-            error = tr(lang, "Tsy misy serivisy feo ao amin'ny findainao.",
-                "Aucun service vocal sur ce téléphone.", "No speech service on this phone.")
-            return
-        }
         error = ""
+        status = "starting"
         speech.start(lang,
-            onListening = { listening = true },
-            onResult = { t -> listening = false; input = (input + " " + t).trim() },
+            onStatus = { s -> status = s; listening = true },
+            onResult = { t -> listening = false; status = ""; input = (input + " " + t).trim() },
             onError = { e ->
                 listening = false
+                status = ""
                 error = when (e) {
                     "nomatch" -> tr(lang, "Tsy renesana tsara. Andramo indray.",
                         "Je n'ai pas compris. Réessayez.", "Didn't catch that. Try again.")
@@ -87,12 +86,11 @@ fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
                         "Language not supported. Try French or English.")
                     "permission" -> tr(lang, "Tsy nahazo alalana ny mikrô.",
                         "Micro non autorisé.", "Microphone not allowed.")
-                    else -> tr(lang, "Tsy mandeha ny mikrô ($e).", "Micro indisponible ($e).",
-                        "Microphone unavailable ($e).")
+                    else -> tr(lang, "Tsy mandeha ny mikrô: ", "Micro indisponible : ",
+                        "Microphone unavailable: ") + e
                 }
             })
     }
-
     val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (ok) startListening()
         else error = tr(lang, "Tsy nahazo alalana ny mikrô, ka tsy afaka mihaino.",
@@ -170,7 +168,7 @@ fun ChatScreen(store: ChatStore, chatId: Long, lang: Lang, onBack: () -> Unit) {
             if (loading) item { Text("…") }
             if (error.isNotEmpty()) item { Bubble(error, false, true) }
         }
-        if (listening) {
+                    Text("Mic: " + status, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
             Text(tr(lang, "Mihaino... miteny azafady", "J'écoute... parlez", "Listening... speak now"),
                 color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
         }
