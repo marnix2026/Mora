@@ -33,7 +33,8 @@ import com.mora.app.ui.assistant.tr
 
 @Composable
 fun MemoryScreen(lang: Lang, onBack: () -> Unit) {
-    val store = remember { MemoryStore(LocalContext.current) }
+        val context = LocalContext.current
+    val store = remember { MemoryStore(context) } 
     var items by remember { mutableStateOf(store.all()) }
     var enabled by remember { mutableStateOf(store.enabled) }
     var input by remember { mutableStateOf("") }
