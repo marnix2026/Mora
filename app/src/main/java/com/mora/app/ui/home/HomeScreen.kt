@@ -45,7 +45,7 @@ fun HomeScreen(strings: Strings, onOpen: (String) -> Unit) {
         Spacer(Modifier.height(24.dp))
         Text(greeting(strings), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
-        CompanionCard(strings) { onOpen("assistant") }
+                CompanionCard(strings, "namana") { onOpen("assistant") }
         Spacer(Modifier.height(24.dp))
         Text(
             strings.features,
