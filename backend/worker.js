@@ -33,20 +33,16 @@ export default {
       parts: [{ text: String(m.text || "").slice(0, 4000) }],
     }));
 
-    const candidates = [
-      { name: "gemini-2.5-flash-lite", cfg: { maxOutputTokens: 800 } },
-      { name: "gemini-4-hydrogen", cfg: { thinkingConfig: { thinkingLevel: "low" }, maxOutputTokens: 800 } },
-      { name: "gemini-3.8-flash", cfg: { thinkingConfig: { thinkingLevel: "low" }, maxOutputTokens: 800 } },
-    ];
-
+    const models = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
     const errors = [];
-    for (const c of candidates) {
-      const payload = { contents, generationConfig: c.cfg };
+
+    for (const name of models) {
+      const payload = { contents, generationConfig: { maxOutputTokens: 800 } };
       if (system) payload.systemInstruction = { parts: [{ text: system }] };
       try {
         const res = await fetch(
           "https://generativelanguage.googleapis.com/v1beta/models/" +
-            c.name + ":generateContent",
+            name + ":generateContent",
           {
             method: "POST",
             headers: {
@@ -54,20 +50,21 @@ export default {
               "x-goog-api-key": env.GEMINI_API_KEY || "",
             },
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(12000),
+            signal: AbortSignal.timeout(20000),
           }
         );
         if (res.ok) {
           const data = await res.json();
           const text =
             data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
-          if (text) return json({ text, model: c.name }, 200, cors);
-          errors.push(c.name + ": empty");
+          if (text) return json({ text, model: name }, 200, cors);
+          errors.push(name + ": empty");
         } else {
-          errors.push(c.name + ": " + res.status);
+          errors.push(name + ": " + res.status);
+          if (res.status === 429) break;
         }
       } catch (e) {
-        errors.push(c.name + ": timeout");
+        errors.push(name + ": timeout");
       }
     }
 
