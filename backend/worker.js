@@ -5,11 +5,9 @@ export default {
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
     };
-
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: cors });
     }
-
     if (request.method !== "POST") {
       return new Response(
         JSON.stringify({ ok: true, service: "mora-ai", hasKey: !!env.GEMINI_API_KEY }),
@@ -25,25 +23,28 @@ export default {
     }
 
     const system = String(body.system || "").slice(0, 4000);
-    const messages = Array.isArray(body.messages) ? body.messages.slice(-30) : [];
+    const messages = Array.isArray(body.messages) ? body.messages.slice(-12) : [];
     if (messages.length === 0) {
       return json({ error: "No messages" }, 400, cors);
     }
 
     const contents = messages.map((m) => ({
       role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: String(m.text || "").slice(0, 8000) }],
+      parts: [{ text: String(m.text || "").slice(0, 4000) }],
     }));
 
     const payload = {
       contents,
-            generationConfig: { thinkingConfig: { thinkingLevel: "low" } },
+      generationConfig: {
+        thinkingConfig: { thinkingLevel: "minimal" },
+        maxOutputTokens: 800,
+      },
     };
     if (system) {
       payload.systemInstruction = { parts: [{ text: system }] };
     }
 
-        const model = "gemini-4-hydrogen";
+    const model = "gemini-4-hydrogen";
     let lastStatus = 0;
     let lastDetail = "";
 
@@ -59,10 +60,9 @@ export default {
               "x-goog-api-key": env.GEMINI_API_KEY || "",
             },
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(25000),
+            signal: AbortSignal.timeout(28000),
           }
         );
-
         if (res.ok) {
           const data = await res.json();
           const text =
