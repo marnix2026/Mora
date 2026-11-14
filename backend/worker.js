@@ -33,11 +33,19 @@ export default {
       parts: [{ text: String(m.text || "").slice(0, 4000) }],
     }));
 
+    const img = body.image;
+    if (img && img.data && img.mime) {
+      const last = contents[contents.length - 1];
+      last.parts.push({
+        inlineData: { mimeType: String(img.mime), data: String(img.data) },
+      });
+    }
+
     const models = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
     const errors = [];
 
     for (const name of models) {
-      const payload = { contents, generationConfig: { maxOutputTokens: 800 } };
+      const payload = { contents, generationConfig: { maxOutputTokens: 1200 } };
       if (system) payload.systemInstruction = { parts: [{ text: system }] };
       try {
         const res = await fetch(
@@ -50,7 +58,7 @@ export default {
               "x-goog-api-key": env.GEMINI_API_KEY || "",
             },
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(20000),
+            signal: AbortSignal.timeout(25000),
           }
         );
         if (res.ok) {
