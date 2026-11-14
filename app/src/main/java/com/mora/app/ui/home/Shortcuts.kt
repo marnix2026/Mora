@@ -17,7 +17,7 @@ val shortcuts = listOf(
     Shortcut("calcul", "123", { it.calcTitle }, { it.calcSub }, true),
     Shortcut("organizer", "OK", { it.orgTitle }, { it.orgSub }, true),
     Shortcut("photo", "IMG", { it.photoTitle }, { it.photoSub }, true),
-        Shortcut("document", "PDF", { it.docTitle }, { it.docSub }, false),
+        Shortcut("document", "PDF", { it.docTitle }, { it.docSub }, true),
     Shortcut("writing", "AB", { "Writing" }, { "CV, taratasy, Facebook" }, true),
         Shortcut("memory", "MEM", { "Memory" }, { "Zavatra tadidiko" }, true),
         Shortcut("learning", "LRN", { "Learning" }, { "Lesona sy quiz" }, true)
